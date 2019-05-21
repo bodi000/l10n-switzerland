@@ -155,7 +155,10 @@ class XMLPFParser(models.AbstractModel):
         :return: a list of attachment tuple (name, content)
         :rtype: list
         """
-        attachments = [(self.file_name + '.tar.gz', self.tar_source.encode('base64'))]
+        attachments = [(
+            self.file_name + '.tar.gz',
+            self.tar_source.encode('base64')
+            )]
         if self.is_tar:
             # Extract XML tree
             try:

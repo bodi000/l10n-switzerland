@@ -186,9 +186,10 @@ class ResPartnerBank(models.Model, BankCommon):
         store=True
     )
 
-    @api.one
+    @api.multi
     @api.depends('acc_number')
     def _compute_acc_type(self):
+        self.ensure_one()
         if (self.acc_number and
                 self.is_swiss_postal_num(self.acc_number)):
             self.acc_type = 'postal'

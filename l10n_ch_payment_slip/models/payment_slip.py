@@ -59,7 +59,7 @@ class PaymentSlip(models.Model):
     _rec_name = 'reference'
 
     reference = fields.Char('BVR/ESR Ref.',
-                            compute='compute_ref',
+                            compute='_compute_ref',
                             index=True,
                             store=True)
 
@@ -69,10 +69,10 @@ class PaymentSlip(models.Model):
                                    ondelete='cascade')
 
     amount_total = fields.Float('Total amount of BVR/ESR',
-                                compute='compute_amount')
+                                compute='_compute_amount')
 
     scan_line = fields.Char('Scan Line',
-                            compute='compute_scan_line',
+                            compute='_compute_scan_line',
                             readonly=True)
 
     invoice_id = fields.Many2one(string='Related invoice',
@@ -83,11 +83,11 @@ class PaymentSlip(models.Model):
 
     slip_image = fields.Binary('Slip Image',
                                readonly=True,
-                               compute="draw_payment_slip_image")
+                               compute='_draw_payment_slip_image')
 
     a4_pdf = fields.Binary('Slip A4 PDF',
                            readonly=True,
-                           compute="draw_a4_report")
+                           compute='_draw_a4_report')
 
     _sql_constraints = [('unique reference',
                          'UNIQUE (reference)',
@@ -137,7 +137,7 @@ class PaymentSlip(models.Model):
     @api.depends('move_line_id',
                  'move_line_id.debit',
                  'move_line_id.credit')
-    def compute_amount(self):
+    def _compute_amount(self):
         """Return the total amount of payment slip
 
         If you need to override please use
@@ -153,7 +153,7 @@ class PaymentSlip(models.Model):
 
     @api.depends('move_line_id',
                  'move_line_id.invoice_id.number')
-    def compute_ref(self):
+    def _compute_ref(self):
         """Retrieve ESR/BVR reference from move line in order to print it
 
         Returns False when no BVR reference should be generated.  No
@@ -240,7 +240,7 @@ class PaymentSlip(models.Model):
                  'move_line_id',
                  'move_line_id.debit',
                  'move_line_id.credit')
-    def compute_scan_line(self):
+    def _compute_scan_line(self):
         """Compute the payment slip scan line to be used
         by scanners
 
@@ -900,13 +900,13 @@ class PaymentSlip(models.Model):
                 img_stream = base64.encodestring(img_stream)
             return img_stream
 
-    def draw_payment_slip_image(self):
+    def _draw_payment_slip_image(self):
         """Draw an us letter format slip in PNG"""
         img = self._draw_payment_slip()
         self.slip_image = base64.encodestring(img)
         return img
 
-    def draw_a4_report(self):
+    def _draw_a4_report(self):
         """Draw an a4 format slip in PDF"""
         img = self._draw_payment_slip(a4=True, out_format='PDF')
         self.a4_pdf = base64.encodestring(img)
