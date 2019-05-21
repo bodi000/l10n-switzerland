@@ -27,6 +27,7 @@ class AccountBankStatementImport(models.TransientModel):
                 'name': attachment[0],
                 'type': 'binary',
                 'datas': attachment[1],
+                'datas_fname': attachment[0]
             }
             statement_line = self.env[
                 'account.bank.statement.line'].search(

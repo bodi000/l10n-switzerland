@@ -51,7 +51,7 @@ class XMLPFParser(models.AbstractModel):
         currency, account_number, statements = super(XMLPFParser, self).parse(
             self.data_file)
 
-        if statements and self.attachments:
+        if statements and getattr(self, 'attachments', False):
             statements[0]['attachments'] = self._parse_attachments()
 
         return currency, account_number, statements
@@ -60,7 +60,7 @@ class XMLPFParser(models.AbstractModel):
         """Add file_reference to find attached image"""
         # add file_ref to link image to bank statement line
         self.add_value_from_node(
-            ns, node, './ns:Refs/ns:AcctSvcrRef', transaction, 'file_ref')
+            ns, node, './ns:Refs//ns:Prtry/ns:Ref', transaction, 'file_ref')
         super(XMLPFParser, self).parse_transaction_details(
             ns, node, transaction)
 
@@ -86,7 +86,8 @@ class XMLPFParser(models.AbstractModel):
         """
         self.tar_source = data_file
         self.data_file = self._get_content_from_stream()
-        self.attachments = self._get_attachments_from_stream(data_file)
+        if self.is_tar:
+            self.attachments = self._get_attachments_from_stream(data_file)
 
     def _get_content_from_stream(self):
         """Source file can be a raw or tar file. We try to guess the
@@ -154,7 +155,7 @@ class XMLPFParser(models.AbstractModel):
         :return: a list of attachment tuple (name, content)
         :rtype: list
         """
-        attachments = [('Statement File', self.tar_source.encode('base64'))]
+        attachments = [(self.file_name + '.tar.gz', self.tar_source.encode('base64'))]
         if self.is_tar:
             # Extract XML tree
             try:
@@ -164,7 +165,7 @@ class XMLPFParser(models.AbstractModel):
                 return attachments
             ns = tree.tag[1:tree.tag.index("}")]    # namespace
             transaction_nodes = tree.xpath(
-                '//ns:Stmt/ns:Ntry/ns:AcctSvcrRef/text()',
+                '//ns:Stmt//ns:Prtry/ns:Ref/text()',
                 namespaces={'ns': ns})
             for transaction in transaction_nodes:
                 att_name = self.file_name + '-' + transaction[:23]
